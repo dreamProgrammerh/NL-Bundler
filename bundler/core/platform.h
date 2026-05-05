@@ -1373,3 +1373,362 @@
 #define STD_CPP20_VERSION  STD_VERSION_CPP(2020)   // 20200000
 #define STD_CPP23_VERSION  STD_VERSION_CPP(2023)   // 20230000
 #define STD_CPP26_VERSION  STD_VERSION_CPP(2026)   // 20260000
+
+// =============================================
+// Cross-Platform Compiler & Feature Macros
+// =============================================
+
+/*
+ * These macros provide a unified interface for compiler-specific features
+ * that vary across platforms and compilers.
+ *
+ * Naming convention:
+ * - M_ prefix indicates a cross-platform macro
+ * - camelCase suffix for consistency with other public macros
+ * - Each macro expands to the appropriate compiler-specific keyword or construct
+ */
+
+// =============================================
+// Thread Local Storage (TLS)
+// =============================================
+
+/*
+ * Thread-local storage duration macros.
+ * 
+ * Platform support:
+ * - C11:        _Thread_local + <threads.h>
+ * - C++11:      thread_local
+ * - GCC/Clang:  __thread (GNU extension, C99/C11)
+ * - MSVC:       __declspec(thread)
+ * - MinGW:      __thread (with POSIX threads) or __declspec(thread)
+ *
+ * Known issues from search results:
+ * - Older MSVC (< 2015) only supports __declspec(thread) [citation:6]
+ * - MinGW with win32 threads has issues with destructors [citation:1]
+ * - Apple platforms had thread_local support removed at one point [citation:7]
+ * - Some platforms require pthreads for TLS destructors [citation:1][citation:7]
+ */
+
+/// @brief Thread-local storage keyword for C/C++ variables
+/// @details Expands to the appropriate TLS keyword for the compiler:
+///          - C23/C11: _Thread_local
+///          - C++11: thread_local
+///          - GCC/Clang: __thread
+///          - MSVC: __declspec(thread)
+/// @example M_threadLocal int counter;
+#if defined(__cplusplus) && __cplusplus >= 201103L
+    // C++11 and later use standard thread_local
+#   define M_threadLocal thread_local
+#elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L && !defined(__cplusplus)
+    // C11/C17/C23 use _Thread_local
+#   define M_threadLocal _Thread_local
+#elif defined(__GNUC__) || defined(__clang__)
+    // GCC/Clang GNU extension (works in C99/C11 mode)
+#   define M_threadLocal __thread
+#elif defined(_MSC_VER)
+    // Microsoft Visual C++
+#   define M_threadLocal __declspec(thread)
+#else
+    // Fallback - no TLS support
+#   define M_threadLocal
+#endif
+
+/// @brief Alias for M_threadLocal with explicit C++ naming
+#define M_tls M_threadLocal
+
+// =============================================
+// Compiler Attributes & Hints
+// =============================================
+
+/*
+ * Compiler-specific attributes for optimization and diagnostics.
+ * These help the compiler generate better code or provide additional checks.
+ */
+
+/// @brief Force inline a function (compiler hint)
+/// @details Expands to compiler-specific always_inline attribute
+/// @example M_alwaysInline int fastAdd(int a, int b) { return a + b; }
+#if defined(_MSC_VER)
+#   define M_alwaysInline __forceinline
+#elif defined(__GNUC__) || defined(__clang__)
+#   define M_alwaysInline __attribute__((always_inline)) inline
+#else
+#   define M_alwaysInline inline
+#endif
+
+/// @brief Never inline a function (useful for debugging)
+/// @example M_noInline void debugFunction() { ... }
+#if defined(_MSC_VER)
+#   define M_noInline __declspec(noinline)
+#elif defined(__GNUC__) || defined(__clang__)
+#   define M_noInline __attribute__((noinline))
+#else
+#   define M_noInline
+#endif
+
+/// @brief Mark a function as pure (no side effects, result depends only on args)
+/// @details Enables common subexpression elimination
+/// @example M_pure int square(int x) { return x * x; }
+#if defined(__GNUC__) || defined(__clang__)
+#   define M_pure __attribute__((pure))
+#else
+#   define M_pure
+#endif
+
+/// @brief Mark a function as const (like pure, but also doesn't read global memory)
+/// @details Even more optimization-friendly than pure
+/// @example M_const int cube(int x) { return x * x * x; }
+#if defined(__GNUC__) || defined(__clang__)
+#   define M_const __attribute__((const))
+#else
+#   define M_const
+#endif
+
+/// @brief Mark a function as hot (frequently executed)
+/// @details Helps with branch prediction and inlining decisions
+#if defined(__GNUC__) || defined(__clang__)
+#   define M_hot __attribute__((hot))
+#else
+#   define M_hot
+#endif
+
+/// @brief Mark a function as cold (rarely executed, e.g., error handlers)
+/// @details Optimizes for size over speed
+#if defined(__GNUC__) || defined(__clang__)
+#   define M_cold __attribute__((cold))
+#else
+#   define M_cold
+#endif
+
+/// @brief Mark a function as deprecated (compiler warning on use)
+/// @example M_deprecated("Use newFunction() instead") void oldFunction();
+#if defined(_MSC_VER)
+#   define M_deprecated(msg) __declspec(deprecated(msg))
+#elif defined(__GNUC__) || defined(__clang__)
+#   define M_deprecated(msg) __attribute__((deprecated(msg)))
+#else
+#   define M_deprecated(msg)
+#endif
+
+/// @brief Mark a function as noreturn (never returns, e.g., exit(), abort())
+/// @details Helps compiler optimize and eliminate unreachable code warnings
+#if defined(_MSC_VER)
+#   define M_noReturn __declspec(noreturn)
+#elif defined(__GNUC__) || defined(__clang__)
+#   define M_noReturn __attribute__((noreturn))
+#else
+#   define M_noReturn
+#endif
+
+/// @brief Mark a function as malloc-like (returns a pointer that doesn't alias)
+/// @details Helps with alias analysis optimization
+#if defined(__GNUC__) || defined(__clang__)
+#   define M_malloc __attribute__((malloc))
+#else
+#   define M_malloc
+#endif
+
+/// @brief Mark a function as warn_unused_result (warning if return value ignored)
+/// @example M_warnUnused int openFile(const char* path);
+#if defined(__GNUC__) || defined(__clang__)
+#   define M_warnUnused __attribute__((warn_unused_result))
+#elif defined(_MSC_VER)
+#   define M_warnUnused _Check_return_
+#else
+#   define M_warnUnused
+#endif
+
+// =============================================
+// Branch Prediction Hints
+// =============================================
+
+/*
+ * Help the compiler optimize branch prediction for hot/cold paths.
+ * These are particularly useful in error handling or rare conditions.
+ */
+
+/// @brief Hint that a condition is likely true (for branch prediction)
+/// @example if (M_likely(ptr != NULL)) { ... }
+#if defined(__GNUC__) || defined(__clang__)
+#   define M_likely(x)   __builtin_expect(!!(x), 1)
+#   define M_unlikely(x) __builtin_expect(!!(x), 0)
+#else
+#   define M_likely(x)   (x)
+#   define M_unlikely(x) (x)
+#endif
+
+// =============================================
+// Compiler Built-ins & Intrinsics
+// =============================================
+
+/*
+ * Compiler-provided built-in functions that don't exist in standard C/C++.
+ * These map to the most efficient implementation available.
+ */
+
+/// @brief Indicate unreachable code (helps optimizer eliminate dead paths)
+/// @example M_unreachable(); // after a function that always throws
+#if defined(_MSC_VER)
+#   define M_unreachable() __assume(0)
+#elif defined(__GNUC__) || defined(__clang__)
+#   define M_unreachable() __builtin_unreachable()
+#else
+#   define M_unreachable() do { } while (1)
+#endif
+
+/// @brief Get the current function name (with nice formatting)
+/// @details
+/// - GCC/Clang: __PRETTY_FUNCTION__ (includes return type and params)
+/// - MSVC: __FUNCSIG__ (includes calling convention)
+/// - C99: __func__ (standard, less detailed)
+/// @example printf("Entered %s\n", M_functionName);
+#if defined(_MSC_VER)
+#   define M_functionName __FUNCSIG__
+#elif defined(__GNUC__) || defined(__clang__)
+#   define M_functionName __PRETTY_FUNCTION__
+#else
+#   define M_functionName __func__
+#endif
+
+/// @brief Get the current function name (simple, standard version)
+#define M_funcName __func__
+
+/// @brief Force a memory barrier (prevents reordering across this point)
+#if defined(_MSC_VER)
+#   include <intrin.h>
+#   pragma intrinsic(_ReadWriteBarrier)
+#   define M_compilerBarrier() _ReadWriteBarrier()
+#elif defined(__GNUC__) || defined(__clang__)
+#   define M_compilerBarrier() __asm__ volatile("" ::: "memory")
+#else
+#   define M_compilerBarrier() do { } while (0)
+#endif
+
+/// @brief Get the alignment of a type (as a compile-time constant)
+/// @example size_t align = M_alignOf(int);
+#if defined(_MSC_VER)
+#   define M_alignOf(type) __alignof(type)
+#elif defined(__GNUC__) || defined(__clang__)
+#   define M_alignOf(type) __alignof__(type)
+#else
+#   define M_alignOf(type) _Alignof(type)
+#endif
+
+/// @brief Force a variable to be aligned to a specific boundary
+/// @example M_aligned(64) float cache_line[8];
+#if defined(_MSC_VER)
+#   define M_aligned(bytes) __declspec(align(bytes))
+#elif defined(__GNUC__) || defined(__clang__)
+#   define M_aligned(bytes) __attribute__((aligned(bytes)))
+#else
+#   define M_aligned(bytes)
+#endif
+
+/// @brief Tell the compiler a variable is probably initialized (suppress warnings)
+/// @example M_assume(ptr != NULL);
+#if defined(_MSC_VER)
+#   define M_assume(expr) __assume(expr)
+#elif defined(__clang__) && __clang_major__ >= 3
+#   define M_assume(expr) __builtin_assume(expr)
+#elif defined(__GNUC__)
+#   define M_assume(expr) do { if (!(expr)) __builtin_unreachable(); } while (0)
+#else
+#   define M_assume(expr) do { } while (0)
+#endif
+
+// =============================================
+// Compiler Feature Detection
+// =============================================
+
+/*
+ * Feature detection macros - 1 if supported, 0 otherwise.
+ * Use these to conditionally compile code that requires specific features.
+ */
+
+/// @brief Returns 1 if the compiler supports C++11 thread_local keyword
+#define M_hasThreadLocal (\
+    (defined(__cplusplus) && __cplusplus >= 201103L) || \
+    (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L) || \
+    defined(__GNUC__) || defined(__clang__) || defined(_MSC_VER))
+
+/// @brief Returns 1 if the compiler supports __builtin_expect (branch prediction)
+#define M_hasBuiltinExpect (defined(__GNUC__) || defined(__clang__))
+
+/// @brief Returns 1 if the compiler supports __builtin_unreachable
+#define M_hasBuiltinUnreachable (\
+    defined(__GNUC__) || defined(__clang__) || defined(_MSC_VER))
+
+/// @brief Returns 1 if the compiler supports always_inline attribute
+#define M_hasAlwaysInline (\
+    defined(_MSC_VER) || defined(__GNUC__) || defined(__clang__))
+
+/// @brief Returns 1 if the compiler supports __PRETTY_FUNCTION__ or similar
+#define M_hasPrettyFunction 1  // All major compilers have some equivalent
+
+// =============================================
+// Standard Library Feature Macros
+// =============================================
+
+/// @brief Align a value to the next multiple of alignment (power of 2)
+/// @example size_t aligned = M_alignUp(15, 16); // returns 16
+#define M_alignUp(value, alignment) \
+    (((value) + ((alignment) - 1)) & ~((alignment) - 1))
+
+/// @brief Align a value to the previous multiple of alignment (power of 2)
+/// @example size_t aligned = M_alignDown(15, 16); // returns 0
+#define M_alignDown(value, alignment) \
+    ((value) & ~((alignment) - 1))
+
+/// @brief Check if a value is aligned to the given alignment (power of 2)
+#define M_isAligned(value, alignment) \
+    (((value) & ((alignment) - 1)) == 0)
+
+/// @brief Count the number of elements in a static array
+#define M_arraySize(arr) (sizeof(arr) / sizeof((arr)[0]))
+
+/// @brief Get the offset of a member within a struct type
+/// @example size_t offset = M_offsetOf(struct mystruct, myfield);
+#if defined(_MSC_VER)
+#   define M_offsetOf(type, member) offsetof(type, member)
+#else
+#   define M_offsetOf(type, member) __builtin_offsetof(type, member)
+#endif
+
+/// @brief Get the container pointer from a member pointer
+/// @example container_t* container = M_containerOf(member_ptr, container_t, member);
+#define M_containerOf(ptr, type, member) \
+    ((type*)((char*)(ptr) - M_offsetOf(type, member)))
+
+/// @brief Suppress unused variable warnings
+/// @example M_unused(x); // x is intentionally unused
+#define M_unused(x) ((void)(x))
+
+/// @brief Mark a variable as potentially unused (suppresses warnings)
+#define M_maybeUnused __attribute__((unused))
+
+// =============================================
+// Endianness Helpers
+// =============================================
+
+/// @brief Swap bytes in a 16-bit value
+#define M_swap16(x) ((unsigned short)(((x) >> 8) | ((x) << 8)))
+
+/// @brief Swap bytes in a 32-bit value
+#define M_swap32(x) \
+    ((unsigned int)(((x) & 0xFF000000) >> 24) | \
+     ((x) & 0x00FF0000) >> 8) | \
+     ((x) & 0x0000FF00) << 8) | \
+     ((x) & 0x000000FF) << 24))
+
+/// @brief Convert from host to network byte order (big-endian)
+#if OS_isBigEndian
+#   define M_hton16(x) (x)
+#   define M_hton32(x) (x)
+#   define M_ntoh16(x) (x)
+#   define M_ntoh32(x) (x)
+#else
+#   define M_hton16(x) M_swap16(x)
+#   define M_hton32(x) M_swap32(x)
+#   define M_ntoh16(x) M_swap16(x)
+#   define M_ntoh32(x) M_swap32(x)
+#endif
