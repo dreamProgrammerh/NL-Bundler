@@ -19,5 +19,11 @@ typedef union cast64 {
 // memory.h
 typedef struct mem_t mem_t;
 
+// string.h
+typedef struct str_t str_t;
+typedef struct string_t string_t;
+typedef struct StringB StringB;
+typedef struct PackedStrings PackedStrings;
+
 // file.h
 typedef struct FileBuffer FileBuffer;

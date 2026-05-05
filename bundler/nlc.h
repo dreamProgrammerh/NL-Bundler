@@ -22,6 +22,7 @@
 // ========================
 // Utilities (Header-only)
 // ========================
+#include "core/memory.h"
 #include "core/strings.h"
 #include "utils/log.h"
 #include "utils/debug.h"
