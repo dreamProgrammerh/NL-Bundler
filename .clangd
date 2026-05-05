@@ -1,0 +1,47 @@
+# Main configuration for all C files
+CompileFlags:
+  Add:
+    - -xc
+    - -std=c17
+    - -Ibundler
+    - -Wall
+    - -Wextra
+  Remove:
+    - -Werror
+
+Diagnostics:
+  UnusedIncludes: Strict
+  MissingIncludes: None
+
+  ClangTidy:
+    Add:
+      - modernize-*
+      - performance-*
+      - bugprone-*
+      - portability-*
+    Remove:
+      - bugprone-suspicious-include
+      - bugprone-easily-swappable-parameters
+      - modernize-return-braced-init-list
+
+    CheckOptions:
+      modernize-make-shared.IgnoreMacros: true
+      readability-identifier-naming.FunctionCase: camelCase
+      readability-identifier-naming.VariableCase: camelCase
+
+InlayHints:
+  Enabled: true
+  ParameterNames: true
+  DeducedTypes: true
+
+Hover:
+  ShowAKA: true
+
+---
+
+# Special case: nlc.h is an umbrella header
+If:
+  PathMatch: .*(nlc\.h|main.c)$
+Diagnostics:
+  Suppress:
+    - unused-includes

@@ -1,0 +1,25 @@
+{
+  "project_name": "NL-Bundler",
+
+  "file_types": {
+    "C": ["*.c", "*.h"],
+    "Markdown": ["*.md", "TODO"]
+  },
+
+  "languages": {
+    "C": { "tab_size": 4 },
+    "JSONC": { "tab_size": 2 },
+    "YAML": { "tab_size": 2 },
+  },
+
+  "remove_trailing_whitespace_on_save": true,
+  "colorize_brackets": true,
+
+  "enable_language_server": true,
+  "lsp": {
+    "clangd": {
+      "enable_lsp_tasks": true,
+      "initialization_options": { "clangdFile": "../.clangd" },
+    },
+  }
+}

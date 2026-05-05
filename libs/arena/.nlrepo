@@ -1,0 +1,9 @@
+Name=arena
+Version=1.0
+Description=Arena allocator
+Author=DreamProgrammer
+Dependencies=none
+License=MIT
+PublicHeaders=arena.h
+ImplementationFiles=arena.c
+DefaultNamespace=aa_

@@ -1,0 +1,22 @@
+[
+  {
+      "label": "Build",
+      "command": "gcc bundler/main.c -o bin/nl.exe"
+  },
+  {
+      "label": "Run",
+      "command": "./bin/nl.exe"
+  },
+  {
+      "label": "Clean",
+      "command": "rm ./bin/nl.exe"
+  },
+  {
+      "label": "Build & Run",
+      "command": "gcc bundler/main.c -o bin/nl.exe ; ./bin/nl.exe"
+  },
+  {
+      "label": "Build & Run & Clean",
+      "command": "gcc bundler/main.c -o bin/nl.exe ; ./bin/nl.exe ; rm ./bin/nl.exe"
+  },
+]

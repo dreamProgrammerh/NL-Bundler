@@ -1,0 +1,38 @@
+# bundler/Makefile
+CC = gcc
+CFLAGS = -std=c17 -Wall -Wextra -g -O2
+INCLUDES = -I.
+TARGET = ../bin/nl
+
+SOURCES = main.c nlc.c \
+          core/strings.c \
+          utils/log.c utils/debug.c utils/path.c utils/file.c \
+          lexer/token.c parser/node.c \
+          lexer/lexer.c parser/parser.c
+
+OBJECTS = $(SOURCES:.c=.o)
+
+.PHONY: all clean run
+
+all: $(TARGET)
+
+$(TARGET): $(OBJECTS)
+	@mkdir -p ../bin
+	$(CC) $^ -o $@
+
+%.o: %.c
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+
+run: $(TARGET)
+	../bin/nl.exe
+
+clean:
+	rm -f $(OBJECTS) ../bin/nl.exe
+
+# Auto-detect dependencies
+%.d: %.c
+	@$(CC) -MM $(INCLUDES) $< > $@.$$$$; \
+	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$
+
+-include $(SOURCES:.c=.d)
