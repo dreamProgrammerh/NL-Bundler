@@ -674,3 +674,702 @@
     !ARCH_isAlpha && !ARCH_isHPPA && !ARCH_isM68K && !ARCH_isIA64
 #   error "No architecture detected - this should not happen"
 #endif
+
+// =============================================
+// Compiler Detection
+// =============================================
+
+// First, define all compiler detection macros with explicit 1/0 values
+#define COMPILER_GCC 0
+#define COMPILER_CLANG 0
+#define COMPILER_MSVC 0
+#define COMPILER_ICC 0           // Intel Classic Compiler
+#define COMPILER_ICX 0           // Intel LLVM-based Compiler (ICX/DPC++)
+#define COMPILER_MINGW 0
+#define COMPILER_CYGWIN 0
+#define COMPILER_TINYC 0
+#define COMPILER_PGI 0           // PGI/NVIDIA HPC SDK
+#define COMPILER_SUNPRO 0        // Oracle Solaris Studio
+#define COMPILER_IBMXL 0         // IBM XL C/C++
+#define COMPILER_ARMCC 0         // ARM Compiler 5/6
+#define COMPILER_EMSCRIPTEN 0
+#define COMPILER_WATCOM 0
+#define COMPILER_BORLAND 0
+#define COMPILER_GHS 0           // Green Hills Software
+
+// Compiler version components
+#define COMPILER_VERSION_MAJOR 0
+#define COMPILER_VERSION_MINOR 0
+#define COMPILER_VERSION_PATCH 0
+
+// Detect GCC
+#if defined(__GNUC__) && !defined(__clang__) && !defined(__INTEL_COMPILER) && !defined(__INTEL_LLVM_COMPILER)
+#   undef COMPILER_GCC
+#   define COMPILER_GCC 1
+#   undef COMPILER_VERSION_MAJOR
+#   undef COMPILER_VERSION_MINOR
+#   undef COMPILER_VERSION_PATCH
+#   define COMPILER_VERSION_MAJOR __GNUC__
+#   define COMPILER_VERSION_MINOR __GNUC_MINOR__
+#   define COMPILER_VERSION_PATCH __GNUC_PATCHLEVEL__
+#endif
+
+// Detect Clang (including Apple Clang)
+#if defined(__clang__) || defined(__CLANG__)
+#   undef COMPILER_CLANG
+#   define COMPILER_CLANG 1
+#   undef COMPILER_VERSION_MAJOR
+#   undef COMPILER_VERSION_MINOR
+#   undef COMPILER_VERSION_PATCH
+#   define COMPILER_VERSION_MAJOR __clang_major__
+#   define COMPILER_VERSION_MINOR __clang_minor__
+#   define COMPILER_VERSION_PATCH __clang_patchlevel__
+#endif
+
+// Detect MSVC
+#if defined(_MSC_VER) && !defined(__clang__) && !defined(__GNUC__)
+#   undef COMPILER_MSVC
+#   define COMPILER_MSVC 1
+#   undef COMPILER_VERSION_MAJOR
+#   undef COMPILER_VERSION_MINOR
+#   undef COMPILER_VERSION_PATCH
+#   // MSVC version encoding: _MSC_VER = MMNNBBBB (Major Minor Build)
+#   define COMPILER_VERSION_MAJOR (_MSC_VER / 100)
+#   define COMPILER_VERSION_MINOR (_MSC_VER % 100)
+#   define COMPILER_VERSION_PATCH 0
+#endif
+
+// Detect Intel Classic Compiler (ICC)
+#if defined(__INTEL_COMPILER) && !defined(__INTEL_LLVM_COMPILER)
+#   undef COMPILER_ICC
+#   define COMPILER_ICC 1
+#   undef COMPILER_VERSION_MAJOR
+#   undef COMPILER_VERSION_MINOR
+#   undef COMPILER_VERSION_PATCH
+#   define COMPILER_VERSION_MAJOR __INTEL_COMPILER / 100
+#   define COMPILER_VERSION_MINOR (__INTEL_COMPILER % 100)
+#   define COMPILER_VERSION_PATCH 0
+#endif
+
+// Detect Intel LLVM-based Compiler (ICX/DPC++)
+#if defined(__INTEL_LLVM_COMPILER)
+#   undef COMPILER_ICX
+#   define COMPILER_ICX 1
+#   undef COMPILER_VERSION_MAJOR
+#   undef COMPILER_VERSION_MINOR
+#   undef COMPILER_VERSION_PATCH
+#   define COMPILER_VERSION_MAJOR __INTEL_LLVM_COMPILER / 100
+#   define COMPILER_VERSION_MINOR (__INTEL_LLVM_COMPILER % 100)
+#   define COMPILER_VERSION_PATCH 0
+#endif
+
+// Detect MinGW (must be after GCC detection)
+#if defined(__MINGW32__) || defined(__MINGW64__)
+#   undef COMPILER_MINGW
+#   define COMPILER_MINGW 1
+#endif
+
+// Detect Cygwin GCC
+#if defined(__CYGWIN__) && defined(__GNUC__)
+#   undef COMPILER_CYGWIN
+#   define COMPILER_CYGWIN 1
+#endif
+
+// Detect TinyCC
+#if defined(__TINYC__)
+#   undef COMPILER_TINYC
+#   define COMPILER_TINYC 1
+#endif
+
+// Detect PGI/NVIDIA HPC SDK
+#if defined(__PGI) || defined(__PGIC__) || defined(__NVCOMPILER)
+#   undef COMPILER_PGI
+#   define COMPILER_PGI 1
+#endif
+
+// Detect Oracle Solaris Studio
+#if defined(__SUNPRO_C) || defined(__SUNPRO_CC)
+#   undef COMPILER_SUNPRO
+#   define COMPILER_SUNPRO 1
+#endif
+
+// Detect IBM XL C/C++
+#if defined(__IBMC__) || defined(__IBMCPP__)
+#   undef COMPILER_IBMXL
+#   define COMPILER_IBMXL 1
+#endif
+
+// Detect ARM Compiler
+#if defined(__ARMCC_VERSION)
+#   undef COMPILER_ARMCC
+#   define COMPILER_ARMCC 1
+#endif
+
+// Detect Emscripten
+#if defined(__EMSCRIPTEN__)
+#   undef COMPILER_EMSCRIPTEN
+#   define COMPILER_EMSCRIPTEN 1
+#endif
+
+// Detect Watcom
+#if defined(__WATCOMC__)
+#   undef COMPILER_WATCOM
+#   define COMPILER_WATCOM 1
+#endif
+
+// Detect Borland
+#if defined(__BORLANDC__)
+#   undef COMPILER_BORLAND
+#   define COMPILER_BORLAND 1
+#endif
+
+// Detect Green Hills Software
+#if defined(__ghs__)
+#   undef COMPILER_GHS
+#   define COMPILER_GHS 1
+#endif
+
+// =============================================
+// PUBLIC COMPILER MACROS (COMPILER_ prefix + camelCase)
+// =============================================
+
+/// @brief Returns 1 if compiling with GCC (not Clang or Intel), 0 otherwise
+#define COMPILER_isGCC (COMPILER_GCC)
+
+/// @brief Returns 1 if compiling with Clang (including Apple Clang), 0 otherwise
+#define COMPILER_isClang (COMPILER_CLANG)
+
+/// @brief Returns 1 if compiling with Microsoft Visual C++, 0 otherwise
+#define COMPILER_isMSVC (COMPILER_MSVC)
+
+/// @brief Returns 1 if compiling with Intel Classic Compiler (ICC), 0 otherwise
+#define COMPILER_isICC (COMPILER_ICC)
+
+/// @brief Returns 1 if compiling with Intel LLVM-based Compiler (ICX/DPC++), 0 otherwise
+#define COMPILER_isICX (COMPILER_ICX)
+
+/// @brief Returns 1 if compiling with MinGW GCC, 0 otherwise
+#define COMPILER_isMinGW (COMPILER_MINGW)
+
+/// @brief Returns 1 if compiling with Cygwin GCC, 0 otherwise
+#define COMPILER_isCygwin (COMPILER_CYGWIN)
+
+/// @brief Returns 1 if compiling with TinyCC, 0 otherwise
+#define COMPILER_isTinyCC (COMPILER_TINYC)
+
+/// @brief Returns 1 if compiling with PGI/NVIDIA HPC SDK, 0 otherwise
+#define COMPILER_isPGI (COMPILER_PGI)
+
+/// @brief Returns 1 if compiling with Oracle Solaris Studio, 0 otherwise
+#define COMPILER_isSunPro (COMPILER_SUNPRO)
+
+/// @brief Returns 1 if compiling with IBM XL C/C++, 0 otherwise
+#define COMPILER_isIBMXL (COMPILER_IBMXL)
+
+/// @brief Returns 1 if compiling with ARM Compiler (5/6), 0 otherwise
+#define COMPILER_isARMCC (COMPILER_ARMCC)
+
+/// @brief Returns 1 if compiling with Emscripten (WebAssembly), 0 otherwise
+#define COMPILER_isEmscripten (COMPILER_EMSCRIPTEN)
+
+/// @brief Returns 1 if compiling with Open Watcom, 0 otherwise
+#define COMPILER_isWatcom (COMPILER_WATCOM)
+
+/// @brief Returns 1 if compiling with Borland C++, 0 otherwise
+#define COMPILER_isBorland (COMPILER_BORLAND)
+
+/// @brief Returns 1 if compiling with Green Hills Software compiler, 0 otherwise
+#define COMPILER_isGHS (COMPILER_GHS)
+
+/// @brief Returns 1 if compiler is any Intel compiler (ICC or ICX), 0 otherwise
+#define COMPILER_isIntel (COMPILER_ICC || COMPILER_ICX)
+
+/// @brief Returns 1 if compiler is GCC-compatible (GCC, Clang, Intel, MinGW, Cygwin), 0 otherwise
+#define COMPILER_isGNUCCompatible (COMPILER_GCC || COMPILER_CLANG || COMPILER_ICC || COMPILER_ICX || COMPILER_MINGW || COMPILER_CYGWIN)
+
+/// @brief Returns compiler major version (e.g., 9 for GCC 9.3.0), 0 if unknown
+#define COMPILER_versionMajor COMPILER_VERSION_MAJOR
+
+/// @brief Returns compiler minor version (e.g., 3 for GCC 9.3.0), 0 if unknown
+#define COMPILER_versionMinor COMPILER_VERSION_MINOR
+
+/// @brief Returns compiler patch version (e.g., 0 for GCC 9.3.0), 0 if unknown
+#define COMPILER_versionPatch COMPILER_VERSION_PATCH
+
+/// @brief Returns compiler version as a single number (major*10000 + minor*100 + patch), 0 if unknown
+#define COMPILER_versionInteger (COMPILER_VERSION_MAJOR * 10000 + COMPILER_VERSION_MINOR * 100 + COMPILER_VERSION_PATCH)
+
+// =============================================
+// Language Detection
+// =============================================
+
+#define LANG_C 0
+#define LANG_CPP 0
+#define LANG_OBJC 0
+#define LANG_OBJCPP 0
+#define LANG_CUDA 0
+#define LANG_HIP 0
+#define LANG_OPENCL 0
+
+// Detect C (most reliable: __STDC__ is defined, __cplusplus is NOT defined)
+// Also check for _STDC_C_VERSION which is more reliable than just __STDC__
+#if defined(__STDC__) && !defined(__cplusplus) && !defined(__OBJC__)
+#   undef LANG_C
+#   define LANG_C 1
+#endif
+
+// Fallback: If we're not in C++ mode and not in ObjC mode, assume C
+// This catches cases where __STDC__ might not be defined (some compilers)
+#if !defined(__cplusplus) && !defined(__OBJC__) && !defined(LANG_C)
+#   undef LANG_C
+#   define LANG_C 1
+#endif
+
+// Detect C++ - check for __cplusplus OR _CPPLIB_VER OR _LIBCPP_VERSION
+#if defined(__cplusplus) || defined(_CPPLIB_VER) || defined(_LIBCPP_VERSION) || defined(__cpp_lib_) || defined(__cpp_)
+#   undef LANG_CPP
+#   define LANG_CPP 1
+#endif
+
+// Detect Objective-C - Multiple macros to check
+#if defined(__OBJC__) || defined(__OBJC2__) || (defined(__clang__) && defined(__OBJC__))
+#   if !defined(__cplusplus)
+#       undef LANG_OBJC
+#       define LANG_OBJC 1
+#   else
+#       undef LANG_OBJCPP
+#       define LANG_OBJCPP 1
+#   endif
+#endif
+
+// Detect CUDA
+#if defined(__CUDACC__) || defined(__CUDA__) || defined(__CUDA_ARCH__)
+#   undef LANG_CUDA
+#   define LANG_CUDA 1
+#endif
+
+// Detect HIP (AMD GPU)
+#if defined(__HIPCC__) || defined(__HIP__) || defined(__HIP_ARCH__)
+#   undef LANG_HIP
+#   define LANG_HIP 1
+#endif
+
+// Detect OpenCL
+#if defined(__OPENCL_VERSION__) || defined(__OPENCL_C_VERSION__)
+#   undef LANG_OPENCL
+#   define LANG_OPENCL 1
+#endif
+
+// =============================================
+// PUBLIC LANGUAGE MACROS (LANG_ prefix + camelCase)
+// =============================================
+
+/// @brief Returns 1 if compiling as C (not C++, not Objective-C), 0 otherwise
+#define LANG_isC (LANG_C)
+
+/// @brief Returns 1 if compiling as C++, 0 otherwise
+#define LANG_isCPP (LANG_CPP)
+
+/// @brief Returns 1 if compiling as Objective-C, 0 otherwise
+#define LANG_isObjC (LANG_OBJC)
+
+/// @brief Returns 1 if compiling as Objective-C++, 0 otherwise
+#define LANG_isObjCPP (LANG_OBJCPP)
+
+/// @brief Returns 1 if compiling as CUDA (device or host), 0 otherwise
+#define LANG_isCUDA (LANG_CUDA)
+
+/// @brief Returns 1 if compiling as HIP (AMD GPU), 0 otherwise
+#define LANG_isHIP (LANG_HIP)
+
+/// @brief Returns 1 if compiling as OpenCL kernel, 0 otherwise
+#define LANG_isOpenCL (LANG_OPENCL)
+
+/// @brief Returns 1 if compiling as a C-family language (C, C++, ObjC, ObjC++), 0 otherwise
+#define LANG_isCFamily (LANG_C || LANG_CPP || LANG_OBJC || LANG_OBJCPP)
+
+// =============================================
+// C Standard Version Detection (FIXED)
+// =============================================
+
+#define STD_C_VERSION 0
+#define STD_C_VERSION_STR "unknown"
+
+// Detect C standard version
+#if defined(__STDC__) && !defined(__cplusplus)
+    
+    // Check for explicit __STDC_VERSION__ (C99 and later)
+    #if defined(__STDC_VERSION__)
+        #undef STD_C_VERSION
+        #undef STD_C_VERSION_STR
+        
+        #if __STDC_VERSION__ >= 202311L
+            #define STD_C_VERSION 202311L
+            #define STD_C_VERSION_STR "C23"
+        #elif __STDC_VERSION__ >= 201710L
+            #define STD_C_VERSION 201710L
+            #define STD_C_VERSION_STR "C17"
+        #elif __STDC_VERSION__ >= 201112L
+            #define STD_C_VERSION 201112L
+            #define STD_C_VERSION_STR "C11"
+        #elif __STDC_VERSION__ >= 199901L
+            #define STD_C_VERSION 199901L
+            #define STD_C_VERSION_STR "C99"
+        #elif __STDC_VERSION__ >= 199409L
+            #define STD_C_VERSION 199409L
+            #define STD_C_VERSION_STR "C94"
+        #else
+            #define STD_C_VERSION 199001L
+            #define STD_C_VERSION_STR "C90"
+        #endif
+        
+    // No __STDC_VERSION__ means pre-C99 (C89/C90)
+    #else
+        #undef STD_C_VERSION
+        #undef STD_C_VERSION_STR
+        #define STD_C_VERSION 199001L
+        #define STD_C_VERSION_STR "C90"
+    #endif
+    
+// For compilers that don't define __STDC__ but are C compilers
+#elif !defined(__cplusplus) && !defined(__OBJC__)
+    #undef STD_C_VERSION
+    #undef STD_C_VERSION_STR
+    #define STD_C_VERSION 199001L
+    #define STD_C_VERSION_STR "C90 (assumed)"
+#endif
+
+// =============================================
+// PUBLIC C STANDARD MACROS (STD_ prefix + camelCase)
+// =============================================
+
+/// @brief Returns the C standard version as a long (e.g., 201112L for C11), 0 if not C
+#define STD_cVersion (STD_C_VERSION)
+
+/// @brief Returns the C standard version as a string (e.g., "C11"), "unknown" if not C
+#define STD_cVersionStr (STD_C_VERSION_STR)
+
+/// @brief Returns 1 if compiling with C99 or later, 0 otherwise
+#define STD_hasC99 (STD_C_VERSION >= 199901L)
+
+/// @brief Returns 1 if compiling with C11 or later, 0 otherwise
+#define STD_hasC11 (STD_C_VERSION >= 201112L)
+
+/// @brief Returns 1 if compiling with C17 or later, 0 otherwise
+#define STD_hasC17 (STD_C_VERSION >= 201710L)
+
+/// @brief Returns 1 if compiling with C23 or later, 0 otherwise
+#define STD_hasC23 (STD_C_VERSION >= 202311L)
+
+// =============================================
+// C++ Standard Version Detection (FIXED)
+// =============================================
+
+// C++ standard version detection
+#define STD_CPP_VERSION 0
+#define STD_CPP_VERSION_STR "unknown"
+
+// Only detect C++ if we're actually in C++ mode
+#if defined(__cplusplus)
+#   undef STD_CPP_VERSION
+#   undef STD_CPP_VERSION_STR
+
+#   if __cplusplus >= 202600L
+#       define STD_CPP_VERSION 202600L
+#       define STD_CPP_VERSION_STR "C++26"
+#   elif __cplusplus >= 202302L
+#       define STD_CPP_VERSION 202302L
+#       define STD_CPP_VERSION_STR "C++23"
+#   elif __cplusplus >= 202002L
+#       define STD_CPP_VERSION 202002L
+#       define STD_CPP_VERSION_STR "C++20"
+#   elif __cplusplus >= 201703L
+#       define STD_CPP_VERSION 201703L
+#       define STD_CPP_VERSION_STR "C++17"
+#   elif __cplusplus >= 201402L
+#       define STD_CPP_VERSION 201402L
+#       define STD_CPP_VERSION_STR "C++14"
+#   elif __cplusplus >= 201103L
+#       define STD_CPP_VERSION 201103L
+#       define STD_CPP_VERSION_STR "C++11"
+#   elif __cplusplus >= 199711L
+#       define STD_CPP_VERSION 199711L
+#       define STD_CPP_VERSION_STR "C++98/03"
+#   endif
+#endif
+
+// =============================================
+// PUBLIC C++ STANDARD MACROS (STD_ prefix + camelCase)
+// =============================================
+
+/// @brief Returns the C++ standard version as a long (e.g., 201703L for C++17), 0 if not C++
+#define STD_cppVersion (STD_CPP_VERSION)
+
+/// @brief Returns the C++ standard version as a string (e.g., "C++17"), "unknown" if not C++
+#define STD_cppVersionStr (STD_CPP_VERSION_STR)
+
+/// @brief Returns 1 if compiling with C++11 or later, 0 otherwise
+#define STD_hasCPP11 (STD_CPP_VERSION >= 201103L)
+
+/// @brief Returns 1 if compiling with C++14 or later, 0 otherwise
+#define STD_hasCPP14 (STD_CPP_VERSION >= 201402L)
+
+/// @brief Returns 1 if compiling with C++17 or later, 0 otherwise
+#define STD_hasCPP17 (STD_CPP_VERSION >= 201703L)
+
+/// @brief Returns 1 if compiling with C++20 or later, 0 otherwise
+#define STD_hasCPP20 (STD_CPP_VERSION >= 202002L)
+
+/// @brief Returns 1 if compiling with C++23 or later, 0 otherwise
+#define STD_hasCPP23 (STD_CPP_VERSION >= 202302L)
+
+/// @brief Returns 1 if compiling with C++26 or later, 0 otherwise
+#define STD_hasCPP26 (STD_CPP_VERSION >= 202600L)
+
+// =============================================
+// Compiler Feature Macros
+// =============================================
+
+/// @brief Returns 1 if the compiler supports C++ attributes ([[...]]), 0 otherwise
+#define COMPILER_hasCppAttributes (LANG_CPP && STD_hasCPP11)
+
+/// @brief Returns 1 if the compiler supports C++11's nullptr, 0 otherwise
+#define COMPILER_hasNullptr (LANG_CPP && STD_hasCPP11)
+
+/// @brief Returns 1 if the compiler supports C++11's constexpr, 0 otherwise
+#define COMPILER_hasConstexpr (LANG_CPP && STD_hasCPP11)
+
+/// @brief Returns 1 if the compiler supports C++11's static_assert, 0 otherwise
+#define COMPILER_hasStaticAssert (LANG_CPP && STD_hasCPP11) || (LANG_C && __STDC_VERSION__ >= 201112L)
+
+/// @brief Returns 1 if the compiler supports C++11's override/final specifiers, 0 otherwise
+#define COMPILER_hasOverride (LANG_CPP && STD_hasCPP11)
+
+/// @brief Returns 1 if the compiler supports C++14's relaxed constexpr, 0 otherwise
+#define COMPILER_hasRelaxedConstexpr (LANG_CPP && STD_hasCPP14)
+
+/// @brief Returns 1 if the compiler supports C++17's if constexpr, 0 otherwise
+#define COMPILER_hasIfConstexpr (LANG_CPP && STD_hasCPP17)
+
+/// @brief Returns 1 if the compiler supports C++17's structured bindings, 0 otherwise
+#define COMPILER_hasStructuredBindings (LANG_CPP && STD_hasCPP17)
+
+/// @brief Returns 1 if the compiler supports C++20's concepts, 0 otherwise
+#define COMPILER_hasConcepts (LANG_CPP && STD_hasCPP20)
+
+/// @brief Returns 1 if the compiler supports C++20's three-way comparison (<=>), 0 otherwise
+#define COMPILER_hasSpaceship (LANG_CPP && STD_hasCPP20)
+
+/// @brief Returns 1 if the compiler supports __attribute__((...)) (GCC-style), 0 otherwise
+#define COMPILER_hasGccAttribute (COMPILER_isGNUCCompatible || COMPILER_isClang)
+
+/// @brief Returns 1 if the compiler supports __declspec(...) (MSVC-style), 0 otherwise
+#define COMPILER_hasDeclspec (COMPILER_isMSVC || COMPILER_isIntel || (COMPILER_isGNUCCompatible && defined(__declspec)))
+
+/// @brief Returns 1 if the compiler supports #pragma once, 0 otherwise
+#define COMPILER_hasPragmaOnce 1  // Supported by practically all modern compilers
+
+/// @brief Returns 1 if the compiler supports __builtin_expect, 0 otherwise
+#define COMPILER_hasBuiltinExpect (COMPILER_isGNUCCompatible || COMPILER_isClang)
+
+/// @brief Returns 1 if the compiler supports __builtin_unreachable, 0 otherwise
+#define COMPILER_hasBuiltinUnreachable (COMPILER_isGNUCCompatible || COMPILER_isClang || COMPILER_isMSVC)
+
+/// @brief Returns 1 if the compiler supports __FUNCTION__ macro, 0 otherwise
+#define COMPILER_hasFunctionMacro 1  // All modern compilers support this
+
+/// @brief Returns 1 if the compiler supports __PRETTY_FUNCTION__ (GCC/Clang), 0 otherwise
+#define COMPILER_hasPrettyFunction (COMPILER_isGNUCCompatible)
+
+/// @brief Returns 1 if the compiler supports __FUNCSIG__ (MSVC), 0 otherwise
+#define COMPILER_hasFuncSig (COMPILER_isMSVC)
+
+// =============================================
+// Version Helper Macros
+// =============================================
+
+/// @brief Converts a year-based version (YYYY) to a standardized version integer
+/// @details Example: STD_VERSION_GEN(2023) -> 20230000
+///          This preserves the year in the high bits for easy comparison
+#define STD_VERSION_GEN(year) ((year) * 10000)
+
+/// @brief Converts a version with year and month (YYYYMM) to a standardized version integer
+/// @details Example: STD_VERSION_FULL(2023, 6) -> 20230600
+#define STD_VERSION_FULL(year, month) ((year) * 10000 + (month) * 100)
+
+/// @brief Converts a version with year, month, and patch (YYYYMMPP) to a standardized version integer
+/// @details Example: STD_VERSION_PATCH(2023, 6, 15) -> 20230615
+#define STD_VERSION_PATCH(year, month, patch) ((year) * 10000 + (month) * 100 + (patch))
+
+/// @brief Extracts the year component from a version integer
+/// @details Example: STD_VERSION_YEAR(20230615) -> 2023
+#define STD_VERSION_YEAR(version) ((version) / 10000)
+
+/// @brief Extracts the month component from a version integer
+/// @details Example: STD_VERSION_MONTH(20230615) -> 6
+#define STD_VERSION_MONTH(version) (((version) / 100) % 100)
+
+/// @brief Extracts the patch component from a version integer
+/// @details Example: STD_VERSION_PATCH_NUM(20230615) -> 15
+#define STD_VERSION_PATCH_NUM(version) ((version) % 100)
+
+/// @brief Compares two versions by year only (ignores month and patch)
+/// @details Returns 1 if v1_year > v2_year, 0 if equal, -1 if less
+///          Usage: STD_VERSION_CMP_YEAR(2023, 2024) -> -1
+#define STD_VERSION_CMP_YEAR(v1, v2) \
+    (((v1) / 10000) > ((v2) / 10000) ? 1 : (((v1) / 10000) < ((v2) / 10000) ? -1 : 0))
+
+/// @brief Compares two versions by year and month (ignores patch)
+/// @details Returns 1 if v1 > v2, 0 if equal, -1 if less
+///          Usage: STD_VERSION_CMP_YEAR_MONTH(202306, 202307) -> -1
+#define STD_VERSION_CMP_YEAR_MONTH(v1, v2) \
+    (((v1) / 100) > ((v2) / 100) ? 1 : (((v1) / 100) < ((v2) / 100) ? -1 : 0))
+
+/// @brief Compares two versions fully (year, month, patch)
+/// @details Returns 1 if v1 > v2, 0 if equal, -1 if less
+#define STD_VERSION_CMP_FULL(v1, v2) \
+    ((v1) > (v2) ? 1 : ((v1) < (v2) ? -1 : 0))
+
+/// @brief Checks if two versions match in year (ignores month and patch)
+/// @details Returns 1 if years match, 0 otherwise
+#define STD_VERSION_MATCH_YEAR(v1, v2) \
+    (((v1) / 10000) == ((v2) / 10000))
+
+/// @brief Checks if two versions match in year and month (ignores patch)
+/// @details Returns 1 if year and month match, 0 otherwise
+#define STD_VERSION_MATCH_YEAR_MONTH(v1, v2) \
+    (((v1) / 100) == ((v2) / 100))
+
+// =============================================
+// Version Comparison Helpers (Boolean Results)
+// =============================================
+
+/// @brief Returns 1 if v1_year > v2_year (year-only comparison)
+#define STD_VERSION_GT_YEAR(v1, v2) \
+    (((v1) / 10000) > ((v2) / 10000))
+
+/// @brief Returns 1 if v1_year >= v2_year (year-only comparison)
+#define STD_VERSION_GE_YEAR(v1, v2) \
+    (((v1) / 10000) >= ((v2) / 10000))
+
+/// @brief Returns 1 if v1_year < v2_year (year-only comparison)
+#define STD_VERSION_LT_YEAR(v1, v2) \
+    (((v1) / 10000) < ((v2) / 10000))
+
+/// @brief Returns 1 if v1_year <= v2_year (year-only comparison)
+#define STD_VERSION_LE_YEAR(v1, v2) \
+    (((v1) / 10000) <= ((v2) / 10000))
+
+/// @brief Returns 1 if v1 (year+month) > v2 (year+month)
+#define STD_VERSION_GT_YEAR_MONTH(v1, v2) \
+    (((v1) / 100) > ((v2) / 100))
+
+/// @brief Returns 1 if v1 (year+month) >= v2 (year+month)
+#define STD_VERSION_GE_YEAR_MONTH(v1, v2) \
+    (((v1) / 100) >= ((v2) / 100))
+
+/// @brief Returns 1 if v1 (year+month) < v2 (year+month)
+#define STD_VERSION_LT_YEAR_MONTH(v1, v2) \
+    (((v1) / 100) < ((v2) / 100))
+
+/// @brief Returns 1 if v1 (year+month) <= v2 (year+month)
+#define STD_VERSION_LE_YEAR_MONTH(v1, v2) \
+    (((v1) / 100) <= ((v2) / 100))
+
+// =============================================
+// Preprocessor-Compatible Version Comparison
+// =============================================
+
+/*
+ * These macros are designed to work in #if preprocessor directives.
+ * They use masking to keep only the year component.
+ * 
+ * Example usage in #if:
+ *   #if STD_VERSION_CMP_YEAR_PP(2023, 2024) < 0
+ *       // Code for versions before 2024
+ *   #endif
+ */
+
+/// @brief Masks out month and patch, keeping only year (for preprocessor comparisons)
+/// @details Example: STD_VERSION_YEAR_ONLY(20230615) -> 2023
+#define STD_VERSION_YEAR_ONLY(version) ((version) / 10000)
+
+/// @brief Masks out patch, keeping year and month (for preprocessor comparisons)
+/// @details Example: STD_VERSION_YEAR_MONTH_ONLY(20230615) -> 202306
+#define STD_VERSION_YEAR_MONTH_ONLY(version) ((version) / 100)
+
+/// @brief Compares year components for preprocessor use (returns 0, 1, or -1)
+/// @details Usable in #if directives
+#define STD_VERSION_CMP_YEAR_PP(v1, v2) \
+    (STD_VERSION_YEAR_ONLY(v1) > STD_VERSION_YEAR_ONLY(v2) ? 1 : \
+     (STD_VERSION_YEAR_ONLY(v1) < STD_VERSION_YEAR_ONLY(v2) ? -1 : 0))
+
+/// @brief Returns 1 if year of v1 >= year of v2 (for preprocessor)
+#define STD_VERSION_GE_YEAR_PP(v1, v2) \
+    (STD_VERSION_YEAR_ONLY(v1) >= STD_VERSION_YEAR_ONLY(v2))
+
+/// @brief Returns 1 if year of v1 <= year of v2 (for preprocessor)
+#define STD_VERSION_LE_YEAR_PP(v1, v2) \
+    (STD_VERSION_YEAR_ONLY(v1) <= STD_VERSION_YEAR_ONLY(v2))
+
+/// @brief Returns 1 if year of v1 > year of v2 (for preprocessor)
+#define STD_VERSION_GT_YEAR_PP(v1, v2) \
+    (STD_VERSION_YEAR_ONLY(v1) > STD_VERSION_YEAR_ONLY(v2))
+
+/// @brief Returns 1 if year of v1 < year of v2 (for preprocessor)
+#define STD_VERSION_LT_YEAR_PP(v1, v2) \
+    (STD_VERSION_YEAR_ONLY(v1) < STD_VERSION_YEAR_ONLY(v2))
+
+// =============================================
+// Practical Examples with C++ Standards
+// =============================================
+
+/*
+ * These macros demonstrate how to apply version comparisons
+ * to actual C++ standard versions
+ */
+
+/// @brief Returns the current C++ standard version as a year-only number (e.g., 2017 for C++17)
+#define STD_cppVersionYear (STD_VERSION_YEAR(STD_cppVersion))
+
+/// @brief Returns the current C++ standard version as year*100 (e.g., 201700 for C++17)
+#define STD_cppVersionYearOnly (STD_VERSION_YEAR_ONLY(STD_cppVersion))
+
+/// @brief Returns 1 if C++ version is at least the specified year
+/// @details Example: STD_cppVersionAtLeast(2020) -> true for C++20, 23, 26
+#define STD_cppVersionAtLeast(year) \
+    (STD_VERSION_YEAR(STD_cppVersion) >= (year))
+
+/// @brief Returns 1 if C++ version is exactly the specified year
+/// @details Example: STD_cppVersionIs(2017) -> true only for C++17
+#define STD_cppVersionIs(year) \
+    (STD_VERSION_YEAR(STD_cppVersion) == (year))
+
+/// @brief Returns 1 if C++ version is between min_year and max_year (inclusive)
+#define STD_cppVersionBetween(min_year, max_year) \
+    (STD_VERSION_YEAR(STD_cppVersion) >= (min_year) && \
+     STD_VERSION_YEAR(STD_cppVersion) <= (max_year))
+
+// =============================================
+// Version Generation for C++ Standards
+// =============================================
+
+/*
+ * Generate version integers from C++ standard years
+ */
+
+/// @brief Generate version integer from year (e.g., STD_VERSION_CPP(2017) -> 20170000)
+#define STD_VERSION_CPP(year) STD_VERSION_GEN(year)
+
+/// @brief Generate version integer from year and month (e.g., STD_VERSION_CPP_FULL(2017, 3) -> 20170300)
+#define STD_VERSION_CPP_FULL(year, month) STD_VERSION_FULL(year, month)
+
+/// @brief Predefined C++ standard versions
+#define STD_CPP98_VERSION  STD_VERSION_CPP(1998)   // 19980000
+#define STD_CPP03_VERSION  STD_VERSION_CPP(2003)   // 20030000
+#define STD_CPP11_VERSION  STD_VERSION_CPP(2011)   // 20110000
+#define STD_CPP14_VERSION  STD_VERSION_CPP(2014)   // 20140000
+#define STD_CPP17_VERSION  STD_VERSION_CPP(2017)   // 20170000
+#define STD_CPP20_VERSION  STD_VERSION_CPP(2020)   // 20200000
+#define STD_CPP23_VERSION  STD_VERSION_CPP(2023)   // 20230000
+#define STD_CPP26_VERSION  STD_VERSION_CPP(2026)   // 20260000
