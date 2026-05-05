@@ -5,7 +5,7 @@ INCLUDES = -I.
 TARGET = ../bin/nl
 
 SOURCES = main.c nlc.c \
-          core/strings.c \
+          core/memory.c core/strings.c \
           utils/log.c utils/debug.c utils/path.c utils/file.c \
           lexer/token.c parser/node.c \
           lexer/lexer.c parser/parser.c

@@ -3,6 +3,7 @@
 
 #ifdef NLC_IMPLEMENTATION
 
+#   include "core/memory.c"
 #   include "core/strings.c"
 
 #   include "utils/log.c"

@@ -16,5 +16,8 @@ typedef union cast64 {
     f64 f;
 } cast64;
 
+// memory.h
+typedef struct mem_t mem_t;
+
 // file.h
 typedef struct FileBuffer FileBuffer;

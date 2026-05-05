@@ -20,6 +20,7 @@ Diagnostics:
       - bugprone-*
       - portability-*
     Remove:
+      - bugprone-reserved-identifier
       - bugprone-suspicious-include
       - bugprone-easily-swappable-parameters
       - modernize-return-braced-init-list
